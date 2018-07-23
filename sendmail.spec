@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['D:\\python\\send_mail'],
+a = Analysis(['D:\\python\\send_mail\\sendmail.py'],
              pathex=['D:\\python\\send_mail'],
              binaries=[],
              datas=[],

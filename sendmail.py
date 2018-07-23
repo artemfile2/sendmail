@@ -1,9 +1,10 @@
 import os
 import re
 import sys
+import codecs
 import smtplib
 import fnmatch
-import codecs
+import datetime
 import mimetypes
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -19,6 +20,7 @@ def send_mail(smtp_addr,
               fromaddr,
               password,
               toaddr,
+              type_mail,
               sender=None,
               subject=None,
               text=None,
@@ -37,14 +39,21 @@ def send_mail(smtp_addr,
         for filename, body in data.items():
             attachment = MIMEBase(mimetypes.guess_type(filename)[0].split('/')[0],
                                   mimetypes.guess_type(filename)[0].split('/')[1])
-            # attachment.set_payload(body)
-            attachment.set_payload(open(filename, "rb").read())
+            attachment.set_payload(body)
+            # attachment.set_payload(open(filename, "rb").read())
             encoders.encode_base64(attachment)
 
-            attachment.add_header('Content-Disposition',
-                                  'attachment',
-                                  # filename=quote(filename))
-                                  filename=('utf_8', '', filename))
+            if type_mail == 'rambler':
+                filename = quote(filename)
+                attachment.add_header('Content-Disposition',
+                                      'attachment',
+                                      filename=quote(filename))
+            else:
+                attachment.add_header('Content-Disposition',
+                                      'attachment',
+                                      filename=('utf_8', '', filename))
+
+
             msg.attach(attachment)
 
     server = smtplib.SMTP_SSL('smtp.mail.ru', 465)
@@ -83,6 +92,11 @@ def prepare():
 
         m_to = re.sub("^\s+|\n|\r|\s+$", '', m_to)
 
+        if m_to.find('rambler') >= 1:
+            type_mail = 'rambler'
+        else:
+            type_mail = 'any'
+
         smtp_addr = 'smtp.mail.ru', 465
         fromaddr = mail_adr
         password = mail_pass
@@ -106,14 +120,18 @@ def prepare():
                   fromaddr,
                   password,
                   toaddr,
+                  type_mail,
                   sender=sender,
                   subject=subject,
                   text=(text, 'plain', 'utf-8'),
                   data=data,
                   )
 
-        print(f"{i}| файл {f_to} на почтовый ящик {m_to} отправленн успешно...")
-        sleep(2)
+        now_date = datetime.datetime.now()
+        now = now_date.strftime("%d.%m.%Y %H:%M:%S")
+
+        print(f"{i}| файл {f_to} на почтовый ящик {m_to} отправленн успешно... в {now}")
+        sleep(60)
 
     input("Для выхода из программы нажмите Enter")
 
