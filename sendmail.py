@@ -10,9 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
-from email.header import Header
 from email.utils import formataddr
-from email.message import EmailMessage
 from urllib.parse import quote
 from time import sleep
 
