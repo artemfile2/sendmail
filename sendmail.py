@@ -77,7 +77,7 @@ def prepare():
     mail_pass = mail_from.split('\\')[1]
 
     mails_to = []
-    mailslist = codecs.open('mails.lst', "r", "utf-8")
+    mailslist = codecs.open('mails.lst', "r", "utf-8-sig")
     for line in mailslist:
         mails_to.append(line.replace('\n', ''))
     mailslist.close()
@@ -89,6 +89,7 @@ def prepare():
         m_to = mail.split('\\')[1]
 
         m_to = re.sub("^\s+|\n|\r|\s+$", '', m_to)
+        f_to = re.sub("^\s+|\n|\r|\s+$", '', f_to)
 
         if m_to.find('rambler') >= 1:
             type_mail = 'rambler'
@@ -99,7 +100,6 @@ def prepare():
         fromaddr = mail_adr
         password = mail_pass
         toaddr = m_to
-        subject = "146 форма отчетности"
         sender = "Макс-М экономический отдел"
         text = 'Здравствуйте, высылаем Вам 146 форму'
 
@@ -113,6 +113,8 @@ def prepare():
                 matches.append(os.path.join(root, filename))
         with open(matches[0], "rb") as f:
             data[filename] = f.read()
+
+        subject = filename
 
         send_mail(smtp_addr,
                   fromaddr,
