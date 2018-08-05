@@ -13,6 +13,8 @@ from email import encoders
 from email.utils import formataddr
 from urllib.parse import quote
 from time import sleep
+from future.backports.datetime import date
+
 
 def send_mail(smtp_addr,
               fromaddr,
@@ -54,16 +56,47 @@ def send_mail(smtp_addr,
 
             msg.attach(attachment)
 
-    server = smtplib.SMTP_SSL('smtp.mail.ru', 465)
-    server.login(fromaddr, password)
-    text = msg.as_string()
+        server = smtplib.SMTP_SSL(smtp_addr[0], smtp_addr[1])
+        try:
+            server.login(fromaddr, password)
+        except smtplib.SMTPAuthenticationError as err:
+            sys.stderr.write(f"Проблема с отправкой письма. Причина: {err}")
+        text = msg.as_string()
 
     try:
         server.send_message(msg)
     except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused) as err:
-        sys.stderr.write("Проблема с отправкой письма. Причина: %s" % err)
+        sys.stderr.write(f"Проблема с отправкой письма. Причина: {err}")
     finally:
         server.quit()
+
+
+def write_result_send(text, cnt):
+    dt = datetime.datetime.now()
+    with open('report.txt', "a+", encoding='utf-8-sig') as f:
+        if cnt == 1:
+            f.write('\n--------------------')
+            f.write('\n\n'+str(dt) + '\n')
+        f.write('\n'+ text)
+
+
+def get_smtp(mail_adr):
+    if mail_adr.find('rambler') >= 1:
+        smtp_mail = 'smtp.rambler.ru'
+        port_mail = 465
+    elif mail_adr.find('mail') >= 1:
+        smtp_mail = 'smtp.mail.ru'
+        port_mail = 465
+    elif mail_adr.find('yandex') >= 1:
+        smtp_mail = 'smtp.yandex.ru'
+        port_mail = 465
+    elif mail_adr.find('gmail') >= 1:
+        smtp_mail = 'smtp.gmail.com'
+        port_mail = 465
+    else:
+        smtp_mail = 'any'
+        port_mail = 465
+    return smtp_mail, port_mail
 
 
 def prepare():
@@ -96,7 +129,9 @@ def prepare():
         else:
             type_mail = 'any'
 
-        smtp_addr = 'smtp.mail.ru', 465
+        smtp_mail, port_mail = get_smtp(mail_adr)
+
+        smtp_addr = smtp_mail, port_mail
         fromaddr = mail_adr
         password = mail_pass
         toaddr = m_to
@@ -105,7 +140,7 @@ def prepare():
 
         data = {}
         path = r"C:\sendmail"
-        fil = '146_' + f_to + '*.xls'
+        fil = '*' + f_to + '*.xls'
 
         matches = []
         for root, dirnames, filenames in os.walk(path):
@@ -130,7 +165,9 @@ def prepare():
         now_date = datetime.datetime.now()
         now = now_date.strftime("%d.%m.%Y %H:%M:%S")
 
-        print(f"{i}| файл {f_to} на почтовый ящик {m_to} отправленн успешно... в {now}")
+        text_msg = f"{i}| файл {f_to} на почтовый ящик {m_to} отправленн успешно... в {now}"
+        write_result_send(text_msg, i)
+        print(text_msg)
         sleep(60)
 
     input("Для выхода из программы нажмите Enter")
