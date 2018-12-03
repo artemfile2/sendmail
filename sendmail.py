@@ -71,9 +71,9 @@ def send_mail(smtp_addr,
         server.quit()
 
 
-def write_result_send(text, cnt):
+def write_log(text, cnt):
     dt = datetime.datetime.now()
-    with open('report.txt', "a+", encoding='utf-8-sig') as f:
+    with open('report.txt', "at+", encoding='utf-8-sig') as f:
         if cnt == 1:
             f.write('\n--------------------')
             f.write('\n\n'+str(dt) + '\n')
@@ -101,8 +101,10 @@ def get_smtp(mail_adr):
 
 def prepare():
 
-    RootFoldersFile = open('from.lst')
+    RootFoldersFile = open('from.lst', encoding='utf-8-sig')
     mail_from = RootFoldersFile.readline()
+    text_from = RootFoldersFile.readline()
+    type_file_from = RootFoldersFile.readline()
     mail_from.join(mail_from.replace('\n', ''))
     RootFoldersFile.close()
 
@@ -136,16 +138,17 @@ def prepare():
         password = mail_pass
         toaddr = m_to
         sender = "Макс-М экономический отдел"
-        text = 'Здравствуйте, высылаем Вам 146 форму'
+        text = f'Здравствуйте, высылаем Вам {text_from}'
 
         data = {}
         path = r"C:\sendmail"
-        fil = '*' + f_to + '*.xls'
+        fil = '*' + f_to + '*.' + type_file_from
 
         matches = []
         for root, dirnames, filenames in os.walk(path):
             for filename in fnmatch.filter(filenames, fil):
                 matches.append(os.path.join(root, filename))
+
         with open(matches[0], "rb") as f:
             data[filename] = f.read()
 
@@ -165,10 +168,17 @@ def prepare():
         now_date = datetime.datetime.now()
         now = now_date.strftime("%d.%m.%Y %H:%M:%S")
 
-        text_msg = f"{i}| файл {f_to} на почтовый ящик {m_to} отправленн успешно... в {now}"
-        write_result_send(text_msg, i)
+        text_msg = f"{i}| файл {f_to} на почтовый ящик {m_to} отправлен успешно... в {now}"
+        write_log(text_msg, i)
         print(text_msg)
         sleep(60)
+        # pyinstaller --onedir --onefile --name=myprogram "D:\1.py"
+        # --onefile — сборка в один файл, т.е.файлы.dll не пишутся.
+        # --windowed - при запуске приложения, будет появляться консоль.
+        # --noconsole — при запуске приложения, консоль появляться не будет.
+        # --icon = app.ico — добавляем иконку в окно.
+        # --paths — возможность вручную прописать путь к необходимым файлам, если pyinstaller не может их
+        # найти(например: --paths D:\python35\Lib\site - packages\PyQt5\Qt\bin)
 
     input("Для выхода из программы нажмите Enter")
 
